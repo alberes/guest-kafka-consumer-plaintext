@@ -57,7 +57,7 @@ docker exec -it guest-broker sh
 
 - Into this directory to execute kafka scripts
 ```
-- cd /opt/kafka/bin
+cd /opt/kafka/bin
 ```
 
 - List topics created in docker-compose

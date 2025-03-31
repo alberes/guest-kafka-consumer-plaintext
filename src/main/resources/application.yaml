@@ -1,0 +1,33 @@
+spring:
+  application:
+    name: guest-kafka-consumer-plaintext
+  output:
+    ansi:
+      enabled: ALWAYS
+  datasource:
+    url: jdbc:postgresql://postgresdb:5432/guests
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    show-sql: true
+    hibernate:
+      #      ddl-auto: update
+      ddl-auto: none
+    properties:
+      hibernate.format_sql: true
+  kafka:
+    bootstrap-servers: guest-broker:9092
+    consumer:
+      group-id: guest-producer # Grupo de consumidores
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      topic: guest-topic
+    producer:
+      group-id: guest-producer
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      topic-failure: guest-topic-failure
+
+  server:
+    port: 8082

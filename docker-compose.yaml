@@ -1,0 +1,64 @@
+services:
+  zookeeper:
+    image: wurstmeister/zookeeper
+    container_name: zookeeper
+    ports:
+      - "2181:2181"
+    networks:
+      - guests-network
+  guest-broker:
+    image: wurstmeister/kafka
+    container_name: guest-broker
+    ports:
+      - "9092:9092"
+    networks:
+      - guests-network
+    environment:
+      KAFKA_ADVERTISED_LISTENERS: INSIDE://guest-broker:9092,OUTSIDE://guest-broker:9093
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INSIDE:PLAINTEXT,OUTSIDE:PLAINTEXT
+      KAFKA_LISTENERS: INSIDE://0.0.0.0:9092,OUTSIDE://0.0.0.0:9093
+      KAFKA_INTER_BROKER_LISTENER_NAME: INSIDE
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_CREATE_TOPICS: "guest-topic,guest-topic-failure"
+  postgresdb:
+    image: postgres:16.3
+    container_name: postgresdb
+    ports:
+      - 5432:5432
+    networks:
+      - guests-network
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES: postgres
+      POSTGRES_DB: guests
+  guest-kafka-producer-plaintext:
+    image: guest-kafka-producer-plaintext
+    container_name: guest-kafka-producer-plaintext
+    ports:
+      - "8081:8081"
+    networks:
+      - guests-network
+    depends_on:
+      - guest-broker
+  pgadmin4:
+    image: dpage/pgadmin4:8.9
+    container_name: pgadmin
+    ports:
+      - "15432:80"
+    networks:
+      - guests-network
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+  guest-kafka-consumer-plaintext:
+    image: guest-kafka-consumer-plaintext
+    container_name: guest-kafka-consumer-plaintext
+    ports:
+      - "8082:8082"
+    networks:
+      - guests-network
+    depends_on:
+      - guest-broker
+networks:
+  guests-network:
+    driver: bridge

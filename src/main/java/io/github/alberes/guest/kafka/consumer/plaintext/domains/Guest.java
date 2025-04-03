@@ -1,5 +1,6 @@
 package io.github.alberes.guest.kafka.consumer.plaintext.domains;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
@@ -24,13 +25,16 @@ public class Guest implements Serializable {
     @Column(name = "name")
     private String name;
 
+    @JsonFormat(pattern = "yyyy-MM-dd")
     @Column(name = "birthday")
     private LocalDate birthday;
 
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     @Column(name = "last_update_date")
     @LastModifiedDate
     private LocalDateTime lastUpdateDate;
 
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     @Column(name = "creation_date")
     @CreatedDate
     private LocalDateTime creationDate;

@@ -12,8 +12,8 @@ spring:
   jpa:
     show-sql: true
     hibernate:
-      #      ddl-auto: update
-      ddl-auto: none
+      ddl-auto: update
+      #ddl-auto: none
     properties:
       hibernate.format_sql: true
   kafka:
@@ -29,5 +29,5 @@ spring:
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
       topic-failure: guest-topic-failure
 
-  server:
-    port: 8082
+server:
+  port: 8082

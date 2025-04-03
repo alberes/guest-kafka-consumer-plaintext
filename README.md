@@ -101,3 +101,24 @@ docker-compose down
 | IDE Client Postgres |pgadmin|
 |     Spring Producer |guest-kafka-producer-plaintext|
 |     Spring Consumer |guest-kafka-consumer-plaintext|
+
+- Create new Guest
+```
+curl --location 'http://localhost:8081/guests' \
+--header 'Content-Type: application/json' \
+--data '{
+"legalEntityNumber": "96852389014",
+"name": "Guest 96852389014",
+"birthday": "2026-04-05"
+}'
+```
+
+- Find all Guest in cache
+```
+curl --location 'http://localhost:8082/guests'
+```
+
+- Find guest in cache or database
+```
+curl --location 'http://localhost:8082/guests/96852389014'
+```

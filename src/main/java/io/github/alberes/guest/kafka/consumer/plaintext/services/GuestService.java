@@ -4,9 +4,11 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.alberes.guest.kafka.consumer.plaintext.controllers.exception.DuplicateRecordException;
 import io.github.alberes.guest.kafka.consumer.plaintext.controllers.exception.GuestTopicFailure;
+import io.github.alberes.guest.kafka.consumer.plaintext.controllers.exception.ObjectNotFoundException;
 import io.github.alberes.guest.kafka.consumer.plaintext.controllers.exception.StandardError;
 import io.github.alberes.guest.kafka.consumer.plaintext.domains.Guest;
 import io.github.alberes.guest.kafka.consumer.plaintext.repositories.GuestRepository;
+import io.github.alberes.guest.kafka.consumer.plaintext.utils.JsonUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -36,11 +38,12 @@ public class GuestService {
 
     private static final List<Guest> GUESTS = new ArrayList<Guest>();
 
+    @Autowired
+    private JsonUtils jsonUtils;
+
     @KafkaListener(topics = "${spring.kafka.consumer.topic}", groupId = "${spring.kafka.consumer.group-id}")
     public void consumer(String message){
-        Guest guest = null;
-        try {            
-            guest = this.objectMapper.readValue(message, Guest.class);
+        Guest guest = guest = jsonUtils.fromJson(message, Guest.class);
             Optional<Guest> guestDB = this.repository.findById(guest.getLegalEntityNumber());
             if(guestDB.isPresent()){
                 GuestTopicFailure guestTopicFailure = new GuestTopicFailure(LocalDateTime.now(), guest, guestDB.get(),
@@ -49,22 +52,13 @@ public class GuestService {
                                 this.guestTopicFailure));
                 this.send(guestTopicFailure);
             }
-            this.repository.save(guest);
+            guest = this.repository.save(guest);
             this.add(guest);
             System.out.println(message);
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
-            throw new RuntimeException(e);
-        }
     }
 
     public void send(GuestTopicFailure guestTopicFailure){
-        String message = null;
-        try {
-            message = this.objectMapper.writeValueAsString(guestTopicFailure);
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
-        }
+        String message = jsonUtils.toJson(guestTopicFailure);
         this.kafkaTemplate.send(this.guestTopicFailure, message);
     }
 
@@ -79,5 +73,21 @@ public class GuestService {
 
     public List<Guest> getGuests(){
         return GUESTS;
+    }
+
+    public Guest find(String legalEntityNumber){
+        Optional<Guest> optional = GUESTS.stream()
+                .filter(guest -> legalEntityNumber.equals(guest.getLegalEntityNumber()))
+                .findFirst();
+        if(optional.isPresent()){
+            return optional.get();
+        }
+
+        Optional<Guest> guestDB = this.repository.findById(legalEntityNumber);
+        if(!guestDB.isPresent()){
+            throw new ObjectNotFoundException("Object not found! legalEntityNumber: " +
+                    legalEntityNumber + " type: " + Guest.class.getName());
+        }
+        return guestDB.get();
     }
 }
